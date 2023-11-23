@@ -3,7 +3,7 @@ YOLOenv/
 
 # all the data..
 data/
-./yolov5/data/*.yaml
+!yolov5/data
 
 # mac thing
 .DS_Store
