@@ -2,7 +2,7 @@
 # -- written by cwa -- 23/11/2023
 
 #relative paths (from train.py)
-path: ./MyDrive/YOLOv5-DeepLearning-Notebook/data/processed/ytbb_cat/data/
+path: ../../drive/MyDrive/YOLOv5-DeepLearning-Notebook/processed/ytbb_cat/data/
 train: images/train
 val: images/val
 test: images/test
