@@ -1,23 +1,26 @@
+
 # -- written by cwa -- 22/11/2023
 
+import concurrent.futures
 import pandas as pd
 from pytube import YouTube
 import random
 import shutil
 import subprocess
 import os
+import time
 
 # this script is for creating a training-ready (images and labels) subset of the YouTube-BB dataset 
 
 # set these variables :
-dataset = 'ytbb_cat'        # name the new dataset                                                  
-classes = ['cat']           # specify which classes to use
-videos_to_download = 101      # specify how many youtube videos to download                        
-class_remapping = {7: 0}    # specify class remapping 
-train_ratio = 0.74          # specify train ratio
-val_ratio = 0.13            # specify val ratio
-test_ratio = 0.13           # specify test ratio *SET TO ZERO IF TEST DATA NOT DESIRED*
-shuffle = True              # shuffle filtered videos before downloading
+dataset = 'ytbb_test'          # name the new dataset                                                  
+classes = ['cat']               # specify which classes to use
+max_videos_to_download = 20    # specify how many youtube videos to download                        
+class_remapping = {7: 0}        # specify class remapping 
+train_ratio = 0.74              # specify train ratio
+val_ratio = 0.13                # specify val ratio
+test_ratio = 0.13               # specify test ratio *SET TO ZERO IF TEST DATA NOT DESIRED*
+shuffle = True                  # shuffle filtered videos before downloading
                             
 #thoughts:                            
 # ..i should write a function to automate class remapping.. 
@@ -26,13 +29,21 @@ shuffle = True              # shuffle filtered videos before downloading
 # ..add option to manually inspect one bounding box overlay after data processing..
 # also a check for duplicate dataset name.. overwrite or nah
 # can i call ffmpeg just once for effeciency?
-# any way to speed up downloads..?
 
-#fix:
-# why is yolov5.py sometimes generated..? --- probably because of '->' in filename
 
 
 # functions:
+def download_video(video_id):
+    try:
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        yt = YouTube(url)
+        stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
+        stream.download(video_download_directory)
+        name_to_id[yt.title] = video_id
+        return [f"       success! ID {video_id} TITLE {yt.title}", True]
+    except Exception as e:
+        return [f"         FAILED ID {video_id} ERROR {str(e)}", False]
+
 # function used for creating images
 def create_image(video_path, timestamp, output_path):
     timestamp_sec = timestamp / 1000
@@ -46,11 +57,30 @@ def create_image(video_path, timestamp, output_path):
         '-q:v', '2',                 
         (output_path + '.jpg') 
     ]
-
     try:
         subprocess.run(ffmpeg_command, check=True)
     except subprocess.CalledProcessError as e:
         print(f"       frame extraction failed: {e}")
+
+def create_images(video_path, timestamps, output_path_base):
+    inputs = []
+    filters = []
+
+    for idx, timestamp in enumerate(timestamps):
+        timestamp_sec = timestamp / 1000
+        timestamp_formatted = f"{int(timestamp_sec // 3600):02d}:{int((timestamp_sec % 3600) // 60):02d}:{timestamp_sec % 60:.03f}"
+        inputs.extend(['-ss', timestamp_formatted, '-i', video_path])
+        filters.append(f"[{idx}:v]frames:v=1[qscale:v=2][out{idx}]")
+
+    filter_complex = ';'.join(filters)
+    output_args = [f"{output_path_base}_{idx}.jpg" for idx in range(len(timestamps))]
+
+    ffmpeg_command = ['ffmpeg'] + inputs + ['-filter_complex', filter_complex, '-map'] + [f"[out{i}]" for i in range(len(timestamps))] + output_args
+
+    try:
+        subprocess.run(ffmpeg_command, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Frame extraction failed: {e}")
 
 # function used for creating annotations in yolo format
 def create_annontation(row):
@@ -109,9 +139,9 @@ print('\n\n-> CREATING DATASET : STARTING..')
 
 print('\n       DATASET NAME : ' + dataset)
 print('\n       CLASSES : ' + str(classes))
-print('\n       # OF VIDEOS TO DOWNLOAD : ' + str(videos_to_download))
+print('\n       MAX # OF VIDEOS TO DOWNLOAD : ' + str(max_videos_to_download))
 print('\n       TRAIN RATIO : ' + str(train_ratio))
-print('\n       VAL RATIO : ' + str(train_ratio))
+print('\n       VAL RATIO : ' + str(val_ratio))
 print('\n       TEST RATIO : ' + str(test_ratio))
 
 # CSV TO MP4
@@ -136,22 +166,22 @@ if shuffle:
 os.makedirs('../../data/temp/')
 video_download_directory = '../../data/temp' 
 
-print('\n -- downloading videos (come back in some hours)..')
+print('\n -- downloading videos (come back in some hours)..\n')
 download_count = 0
 name_to_id = {}
-for video_id in unique_video_ids:
-    if download_count >= videos_to_download:
-        break
-    try:
-        url = f"https://www.youtube.com/watch?v={video_id}"
-        yt = YouTube(url)
-        stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
-        stream.download(video_download_directory)
-        name_to_id[yt.title] = video_id
-        download_count = download_count + 1
-        print(f"\n       {str(download_count)} : downloaded video {video_id}\n")
-    except Exception as e:
-        print(f"\n       failed to get video {video_id}: {str(e)}\n")
+
+start_time = time.time()
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    
+    results = executor.map(download_video, unique_video_ids[:max_videos_to_download])
+
+    for result in results:
+        print(result[0])
+        if result[1] == True:
+            download_count = download_count + 1
+
+print('\n -- downloaded ' + str(download_count) + ' videos :)')
 
 print('\n -- creating dictionaries..')
 id_to_name = {value: key for key, value in name_to_id.items()}
