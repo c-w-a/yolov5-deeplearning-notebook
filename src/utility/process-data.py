@@ -9,13 +9,15 @@ import shutil
 import subprocess
 import os
 import time
+import fnmatch
+import glob
 
 # this script is for creating a training-ready (images and labels) subset of the YouTube-BB dataset 
 
 # set these variables :
-dataset = 'ytbb_test'          # name the new dataset                                                  
+dataset = 'ytbb_test'           # name the new dataset                                                  
 classes = ['cat']               # specify which classes to use
-max_videos_to_download = 20    # specify how many youtube videos to download                        
+max_videos_to_download = 7    # specify how many youtube videos to download                        
 class_remapping = {7: 0}        # specify class remapping 
 train_ratio = 0.74              # specify train ratio
 val_ratio = 0.13                # specify val ratio
@@ -33,6 +35,7 @@ shuffle = True                  # shuffle filtered videos before downloading
 
 
 # functions:
+# function used to download video (called my multiple threads)
 def download_video(video_id):
     try:
         url = f"https://www.youtube.com/watch?v={video_id}"
@@ -44,43 +47,61 @@ def download_video(video_id):
     except Exception as e:
         return [f"         FAILED ID {video_id} ERROR {str(e)}", False]
 
-# function used for creating images
-def create_image(video_path, timestamp, output_path):
-    timestamp_sec = timestamp / 1000
-    timestamp_formatted = f"{int(timestamp_sec // 3600):02d}:{int((timestamp_sec % 3600) // 60):02d}:{timestamp_sec % 60:.03f}"
+# function used to rename the rextracted frames to match yolov5 expected format
+def rename_frames(timestamps, video_id):
+    
+    pattern = f"{video_id}_*.jpg"
+    extracted_frames = sorted([f for f in os.listdir(image_directory) if fnmatch.fnmatch(f, pattern)])
+    
+    if len(extracted_frames) != len(timestamps):
+        print("\n       uh-oh: the number of extracted frames and timestamps do not match")
+        return
+
+    for frame_file, timestamp in zip(extracted_frames, timestamps):
+        original = os.path.join(image_directory, frame_file)
+        new_filename = f"{video_id}_{timestamp}.jpg"
+        new_path = os.path.join(image_directory, new_filename)
+        os.rename(original, new_path)
+
+# function used to extract all frames in dataset from one video
+def extract_frames(video_path, timestamps, video_id):
+    
+    timestamps_sec = [timestamp / 1000 for timestamp in timestamps]
+    select_filter = '+'.join([f'eq(n,{int(ts * 30)})' for ts in timestamps_sec])
+    
+    output_pattern = os.path.join(image_directory, f"{video_id}_%04d.jpg")
 
     ffmpeg_command = [
         'ffmpeg',
         '-i', video_path,
-        '-ss', timestamp_formatted,  
-        '-frames:v', '1',            
-        '-q:v', '2',                 
-        (output_path + '.jpg') 
+        '-vf', f'select=\'{select_filter}\',setpts=N/FRAME_RATE/TB',
+        '-vsync', 'vfr',
+        '-q:v', '2',
+        output_pattern
     ]
-    try:
-        subprocess.run(ffmpeg_command, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"       frame extraction failed: {e}")
-
-def create_images(video_path, timestamps, output_path_base):
-    inputs = []
-    filters = []
-
-    for idx, timestamp in enumerate(timestamps):
-        timestamp_sec = timestamp / 1000
-        timestamp_formatted = f"{int(timestamp_sec // 3600):02d}:{int((timestamp_sec % 3600) // 60):02d}:{timestamp_sec % 60:.03f}"
-        inputs.extend(['-ss', timestamp_formatted, '-i', video_path])
-        filters.append(f"[{idx}:v]frames:v=1[qscale:v=2][out{idx}]")
-
-    filter_complex = ';'.join(filters)
-    output_args = [f"{output_path_base}_{idx}.jpg" for idx in range(len(timestamps))]
-
-    ffmpeg_command = ['ffmpeg'] + inputs + ['-filter_complex', filter_complex, '-map'] + [f"[out{i}]" for i in range(len(timestamps))] + output_args
 
     try:
         subprocess.run(ffmpeg_command, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"Frame extraction failed: {e}")
+        print(f"Failed frame extraction: {e}")
+
+# function for use of multithreaded when processing videos
+def process_video(video_name):
+    
+    if pd.isna(video_name):
+        return
+
+    video_id = name_to_id[video_name]
+    video_path = os.path.join(video_download_directory, f"{video_name}.mp4")
+
+    if not os.path.exists(video_path):
+        return
+
+    label_rows = filtered_df[filtered_df.iloc[:,0] == video_id]
+    timestamps = label_rows.iloc[:,1].tolist()
+
+    extract_frames(video_path, timestamps, video_id)
+    rename_frames(timestamps, video_id)
 
 # function used for creating annotations in yolo format
 def create_annontation(row):
@@ -172,7 +193,7 @@ name_to_id = {}
 
 start_time = time.time()
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
     
     results = executor.map(download_video, unique_video_ids[:max_videos_to_download])
 
@@ -201,33 +222,31 @@ label_directory = '../../data/processed/' + dataset + '/data/labels/'
 os.makedirs(data_directory, exist_ok=True)
 os.makedirs(image_directory, exist_ok=True)
 os.makedirs(label_directory, exist_ok=True)
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    video_names = filtered_df.iloc[:,10].unique()
+    executor.map(process_video, video_names)
+
 for video_name in filtered_df.iloc[:,10].unique():
-    
+     
     if pd.isna(video_name):
         continue
-
+    
     video_id = name_to_id[video_name]
 
-    video_path = os.path.join(video_download_directory, f"{video_name}.mp4")
-
-    if not os.path.exists(video_path):
-        continue
-
     label_rows = filtered_df[filtered_df.iloc[:,0] == video_id]
-    
+
     for _, row in label_rows.iterrows():
         timestamp = row[1]
-        image_filename = f"{video_id}_{timestamp}"
-        image_output_path = os.path.join(image_directory, image_filename)
-        create_image(video_path, timestamp, image_output_path)
         label = create_annontation(row)
 
-        if label == None:
+        if label is None:
             continue
 
+        image_filename = f"{video_id}_{timestamp}"
         label_filename = image_filename + '.txt'
         label_output_path = os.path.join(label_directory, label_filename)
-        
+
         with open(label_output_path, 'w') as file:
             file.write(label)
 
@@ -296,6 +315,15 @@ print('\n\n -- CLEANING UP : STARTING..')
 
 print('\n -- deleting mp4s and temp folder..')
 shutil.rmtree(video_download_directory)
+
+print('\n -- deleting any unused labels from failed video downloads..')
+txt_files = glob.glob(os.path.join('../../data/processed/' + dataset + '/data/labels/', '*.txt'))
+
+for file_path in txt_files:
+    try:
+        os.remove(file_path)
+    except OSError as e:
+        print(f"       error: {file_path} : {e.strerror}")
 
 print('\n -- CLEANING UP : DONE ! :)')
 
