@@ -3,15 +3,15 @@
 tinkering with the YOLOv5 object detection model and the YouTube Bounding Boxes dataset..
 
 PROJECT PLAN:
-create an easy-to-use notebook that will allow others to train YOLOv5 object detection models using a subset of the YouTube Bounding Boxes dataset by abstracting and automating the entire process including environment set-up, data filtering, data acquisition, frame extraction, label generation, dataset splitting, YOLOv5 training preparation, etc. 
+to create an easy-to-use deep learning notebook that will allow others to train a YOLOv5 object detection model using a subset of the YouTube Bounding Boxes dataset by abstracting and automating much of the process including environment set-up, data filtering, data acquisition, frame extraction, label generation, dataset splitting, YOLOv5 training preparation, etc. 
 
 COMPLETED FEATURES SO FAR:
 - data filtering
-- data acquisition
-- frame extraction
+- data acquisition (now ~3x faster with multithreading)
+- frame extraction (now much faster by only calling ffmpeg once per video)
 - label generation
 - dataset splitting
-- data organization (YOLOv5-ready format)
+- YOLOv5-ready file structure
 
 instructions:
 - clone repo
