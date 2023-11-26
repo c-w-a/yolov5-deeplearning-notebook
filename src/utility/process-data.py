@@ -15,13 +15,13 @@ import glob
 # this script is for creating a training-ready (images and labels) subset of the YouTube-BB dataset 
 
 # set these variables :
-dataset = 'ytbb_test'           # name the new dataset                                                  
-classes = ['cat']               # specify which classes to use
-max_videos_to_download = 7    # specify how many youtube videos to download                        
-class_remapping = {7: 0}        # specify class remapping 
-train_ratio = 0.74              # specify train ratio
-val_ratio = 0.13                # specify val ratio
-test_ratio = 0.13               # specify test ratio *SET TO ZERO IF TEST DATA NOT DESIRED*
+dataset = 'extra'           # name the new dataset                                                  
+classes = ['dog']               # specify which classes to use
+max_videos_to_download = 50    # specify how many youtube videos to download                        
+class_remapping = {19: 0}        # specify class remapping 
+train_ratio = 0.68              # specify train ratio
+val_ratio = 0.16                # specify val ratio
+test_ratio = 0.16               # specify test ratio *SET TO ZERO IF TEST DATA NOT DESIRED*
 shuffle = True                  # shuffle filtered videos before downloading
                             
 #thoughts:                            
@@ -30,9 +30,6 @@ shuffle = True                  # shuffle filtered videos before downloading
 # ..more error handling..
 # ..add option to manually inspect one bounding box overlay after data processing..
 # also a check for duplicate dataset name.. overwrite or nah
-# can i call ffmpeg just once for effeciency?
-
-
 
 # functions:
 # function used to download video (called my multiple threads)
@@ -193,7 +190,7 @@ name_to_id = {}
 
 start_time = time.time()
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
     
     results = executor.map(download_video, unique_video_ids[:max_videos_to_download])
 
