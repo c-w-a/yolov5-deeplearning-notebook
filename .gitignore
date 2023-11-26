@@ -1,6 +1,9 @@
 # virtualenv
 YOLOenv/
 
+# run weights, inference videos, etc
+experiments/
+
 # all the data..
 data/
 !yolov5/data
