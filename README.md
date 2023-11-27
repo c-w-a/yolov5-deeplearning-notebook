@@ -9,7 +9,7 @@ experimenting with the YOLOv5 object detection algorithm and the YouTube Boundin
 PROJECT PLAN:
 to create an easy-to-use notebook that myself and others can use to learn about and train YOLOv5 object detection models using subsets of the YouTube Bounding Boxes dataset. So far, I have automated the data downloading and preprocessing portion with the process-data.py script. I plan on creating a clean and simple Google Colab notebook that will act as an easy interface for the user.
 
-COMPLETED SO FAR:
+AUTOMATED SO FAR:
 - class selection from the YouTube Bounding Boxes dataset
 - downloading the videos (now about ~3x faster using multithreading)
 - extracting frames (now much faster by only calling ffmpeg once per video..)
