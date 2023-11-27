@@ -1,19 +1,19 @@
 # YOLOv5-DeepLearning-Notebook
 
-tinkering with the YOLOv5 object detection model and the YouTube Bounding Boxes dataset..
+PROOF OF CONCEPT: (CatBot3000)
+
+![linkedin-version(1)](https://github.com/c-w-a/YOLOv5-DeepLearning-Notebook/assets/108597555/0874883d-046b-489e-9ede-a67f55448546)
+
+experimenting with the YOLOv5 object detection algorithm and the YouTube Bounding Boxes dataset..
 
 PROJECT PLAN:
-to create an easy-to-use deep learning notebook that will allow others to train a YOLOv5 object detection model using a subset of the YouTube Bounding Boxes dataset by abstracting and automating much of the process including environment set-up, data filtering, data acquisition, frame extraction, label generation, dataset splitting, YOLOv5 training preparation, etc. 
+to create an easy-to-use notebook that myself and others can use to learn about and train YOLOv5 object detection models using subsets of the YouTube Bounding Boxes dataset. So far, I have automated the data downloading and preprocessing portion with the process-data.py script. I plan on creating a clean and simple Google Colab notebook that will act as an easy interface for the user.
 
-COMPLETED FEATURES SO FAR:
-- YouTube-BB class selection
-- downloading videos (now ~3x faster with multithreading)
-- extracting frames (now much faster by only calling ffmpeg once per video)
-- generating labels
-- splitting the dataset
-- YOLOv5-ready file structure
-
-instructions:
-- clone repo
-- run set-up script (in progress..)
+AUTOMATED SO FAR:
+- class selection from the YouTube Bounding Boxes dataset
+- downloading the videos (now about ~3x faster using multithreading)
+- extracting frames (now much faster by only calling ffmpeg once per video..)
+- generating labels in YOLOv5-ready format
+- remapping selected classes for YOLOv5 (zero indexed)
+- splitting the dataset and organizing files appropriately for YOLOv5 training
 - 
