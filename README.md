@@ -1,4 +1,4 @@
-# YOLOv5-DeepLearning-Notebook
+# YOLOv5-deeplearning-notebook
 
 example: (catbot3000)
 
