@@ -1,5 +1,5 @@
 # virtualenv
-YOLOenv/
+venv/
 
 # run weights, inference videos, etc
 experiments/
@@ -14,6 +14,7 @@ data/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*.pyc
 *$py.class
 
 # C extensions

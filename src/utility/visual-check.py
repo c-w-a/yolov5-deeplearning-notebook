@@ -13,7 +13,7 @@ subset = 'train'         # specify which subset
 
 # functioned used to create a bounding box overlay
 def draw_label(image_path, label_path, image_size=640):
-    
+
     image = cv2.imread(image_path)
     if image is None:
         print(f"       image not found: {image_path}")
