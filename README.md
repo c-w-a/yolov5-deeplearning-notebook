@@ -25,7 +25,7 @@
 - handles cleanup and error cases
 
 **YOLOv5 integration**:
-- pre-configured for dataset formats
+- pre-configured for accepted dataset formats
 - automated YAML config generation
 - ready-to-run training pipeline
 
