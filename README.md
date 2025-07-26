@@ -9,8 +9,8 @@
 ## usage
 
 1. set parameters in `yolobook.ipynb`
-2. run cells sequentially
-3. get trained model + performance metrics
+2. run cells sequentially -> get trained model + performance metrics
+3. upload a photo or video to test model inference
 
 ![linkedin-version(1)](https://github.com/c-w-a/YOLOv5-DeepLearning-Notebook/assets/108597555/0874883d-046b-489e-9ede-a67f55448546)
 
