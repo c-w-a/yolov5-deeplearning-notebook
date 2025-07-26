@@ -1,6 +1,6 @@
 # YOLOv5-deeplearning-notebook
 
-**automated pipeline for training custom YOLOv5 object detection models using the YouTube Bounding Boxes dataset**
+**automated pipeline for training custom YOLOv5 object detection models using the YouTube Bounding Box dataset**
 - simple notebook interface
 - supports 23 different object classes (person, cat, dog, vehicles, etc.)
 - processes YouTube videos into training-ready datasets
@@ -8,7 +8,7 @@
 
 ## usage
 
-1. set parameters in `YoloBook.ipynb`
+1. set parameters in `yolobook.ipynb`
 2. run cells sequentially
 3. get trained model + performance metrics
 
