@@ -1,16 +1,34 @@
 # YOLOv5-deeplearning-notebook
 
-example: (catbot3000)
+**automated pipeline for training custom YOLOv5 object detection models using the YouTube Bounding Boxes dataset**
+- simple notebook interface
+- supports 23 different object classes (person, cat, dog, vehicles, etc.)
+- processes YouTube videos into training-ready datasets
+- supports cloud or local resources for training models
+
+## usage
+
+1. set parameters in `YoloBook.ipynb`
+2. run cells sequentially
+3. get trained model + performance metrics
 
 ![linkedin-version(1)](https://github.com/c-w-a/YOLOv5-DeepLearning-Notebook/assets/108597555/0874883d-046b-489e-9ede-a67f55448546)
 
-experimenting with the YOLOv5 object detection algorithm and the YouTube Bounding Boxes dataset..
+## automated pipeline features
 
-AUTOMATED SO FAR:
-- class selection from the YouTube Bounding Boxes dataset
-- downloading the videos (now about ~3x faster using multithreading)
-- extracting frames (now much faster by only calling ffmpeg once per video..)
-- generating labels in YOLOv5-ready format
-- remapping selected classes for YOLOv5 (zero indexed)
-- splitting the dataset and organizing files appropriately for YOLOv5 training
-- 
+**data processing** (`src/utility/process-data.py`):
+- downloads YouTube videos (added multithreading, ~3x faster now)
+- extracts frames efficiently (a single ffmpeg call per video)
+- generates YOLO-format bounding box labels
+- remaps class IDs to zero-indexed format
+- splits data into train/validation/test sets
+- handles cleanup and error cases
+
+**YOLOv5 integration**:
+- pre-configured for dataset formats
+- automated YAML config generation
+- ready-to-run training pipeline
+
+**utilities**:
+- `visual-check.py` - randomized dataset inspection with bounding box overlays
+- `datapaths-to-txt.py` - generates image path files for training
