@@ -4,7 +4,7 @@
 - simple notebook interface
 - supports 23 different object classes (person, cat, dog, vehicles, etc.)
 - processes YouTube videos into training-ready datasets
-- supports cloud or local resources for training models
+- supports cloud or local GPU resources for training models
 
 ## usage
 
